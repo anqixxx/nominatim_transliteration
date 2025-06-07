@@ -9,7 +9,7 @@ async def search(query):
         return await api.search(query, address_details=True)
         # return await api.search(query)
 
-def transliterate(text): # defaults to english
+def transliterate(text): #  only latin transliteration
     return unidecode(text)
 
 variable = 'hospital in dandong'
@@ -32,6 +32,12 @@ else:
         address_parts = result.address_rows.localize(locale)
         print(f"{i + 1}. {', '.join(address_parts)}")
 
+    locale = napi.Locales(['fr']) 
+    print('\nDirect Localization to French:')
+    for i, result in enumerate(results):
+        address_parts = result.address_rows.localize(locale)
+        print(f"{i + 1}. {', '.join(address_parts)}")
+
     print('\nTranliterated Result: ')
     locale = napi.Locales(['chinese']) 
     for i, result in enumerate(results):
@@ -39,6 +45,12 @@ else:
         print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
 
     print('\n Combination Result: ')
+    locale = napi.Locales(['en']) 
+    for i, result in enumerate(results):
+        address_parts = result.address_rows.localize(locale)
+        print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
+
+    print('\n Reverse Result: ')
     locale = napi.Locales(['en']) 
     for i, result in enumerate(results):
         address_parts = result.address_rows.localize(locale)
