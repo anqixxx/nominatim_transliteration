@@ -1,8 +1,8 @@
 # Proof of concept of transliteration using Nominatim as a library
-from nominatim_api.v1.format import dispatch as dispatch
 import nominatim_api as napi
 from unidecode import unidecode
 import asyncio
+from nominatim_api import StatusResult
 
 async def search(query):
     async with napi.NominatimAPIAsync() as api:

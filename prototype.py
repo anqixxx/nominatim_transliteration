@@ -1,5 +1,5 @@
 # Proof of concept of transliteration using Nominatim as a library
-from nominatim_api.v1.format import dispatch as dispatch
+# from nominatim_api.v1.format import dispatch as dispatch
 import nominatim_api as napi
 from unidecode import unidecode
 import asyncio
