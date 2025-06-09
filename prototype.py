@@ -1,5 +1,5 @@
 # Proof of concept of transliteration using Nominatim as a library
-
+from nominatim_api.v1.format import dispatch as dispatch
 import nominatim_api as napi
 from unidecode import unidecode
 import asyncio
@@ -55,3 +55,6 @@ else:
     for i, result in enumerate(results):
         address_parts = result.address_rows.localize(locale)
         print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
+
+    # for i, result in enumerate(results):
+    #     print(result)
