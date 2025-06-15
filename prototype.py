@@ -152,14 +152,14 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
     locales = napi.Locales(user_languages) 
     lang_map = load_languages()
     label_parts: List[str] = []
-
-    if bool(set(get_languages(result, lang_map)) & set(user_languages)):
-        return label_parts
+    iso = False
 
     if not result.address_rows:
         return label_parts
-    
 
+    if bool(set(get_languages(result, lang_map)) & set(user_languages)):
+        iso = True
+    
     for line in result.address_rows:
         if line.isaddress and line.names:
             line.local_name = locales.display_name(line.names)
@@ -167,7 +167,7 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
             language = detect_language_langdetect(line)
             
             if not label_parts or label_parts[-1] != line.local_name:
-                if language in user_languages:
+                if iso or language in user_languages:
                     label_parts.append(line.local_name)
                 else:
                     label_parts.append(_transliterate(line.local_name, locales))
@@ -178,5 +178,5 @@ variable = 'hospital in dandong'
 results = asyncio.run(search(f"{variable}"))
 
 # print(get_locales(results))
-# also need to have zh, chinese, zh_hs, zh-cn be together?
-result_transliterate(results,  ['cn', 'fr'] )
+# also need to have zh, chinese, cn, zh_hs, zh-cn be together?
+result_transliterate(results,  ['zh', 'fr'] )
