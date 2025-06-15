@@ -6,7 +6,7 @@ from unidecode import unidecode
 import asyncio
 import yaml
 from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
-from langdetect import detect # for now, until can figure out why names default no langauge
+from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
 
 async def search(query):
     async with napi.NominatimAPIAsync() as api:
@@ -81,16 +81,14 @@ def get_locales(results):
     return sorted(locale_set)
 
 def result_transliterate(results, user_languages):
-    locale = napi.Locales(user_languages) 
-
     for i, result in enumerate(results):
-        address_parts = transliterate(result, locale)
+        address_parts = transliterate(result, user_languages)
         print(f"{i + 1}. {', '.join(part for part in address_parts)}")
 
 def _transliterate(text, locales: napi.Locales): #  only latin transliteration for now
     return unidecode(text)
 
-def transliterate(result, locales: napi.Locales) -> List[str]:
+def transliterate(result, user_languages: List) -> List[str]:
     """ Based on Nominatim Localize 
         Assumes the user does not know the local language
     
@@ -101,29 +99,33 @@ def transliterate(result, locales: napi.Locales) -> List[str]:
         Only address parts that are marked as isaddress are localized
         and returned.
     """
+    locales = napi.Locales(user_languages) 
     label_parts: List[str] = []
+
     if not result.address_rows:
         return label_parts
     
     for line in result.address_rows:
         if line.isaddress and line.names:
-            
-            original = line.local_name
-            line.local_name = locales.display_name(line.names) # picks the best display name
-        
+            line.local_name = locales.display_name(line.names)
+
+            try:
+                language = detect(line.local_name) if len(line.local_name.strip()) >= 3 else None
+            except LangDetectException:
+                language = None
+
+            print(language)
+
             if not label_parts or label_parts[-1] != line.local_name:
-                if detect(original) in locales:
+                if language in user_languages:
                     label_parts.append(line.local_name)
-                elif line.local_name == original:
-                    label_parts.append(_transliterate(line.local_name, locales))
                 else:
-                    label_parts.append(line.local_name)
+                    label_parts.append(_transliterate(line.local_name, locales))
+
     return label_parts
-
-
 
 variable = 'hospital in dandong'
 results = asyncio.run(search(f"{variable}"))
 
 # print(get_locales(results))
-result_transliterate(results,  ['zh', 'fr'] )
+result_transliterate(results,  ['zh-cn', 'fr'] )
