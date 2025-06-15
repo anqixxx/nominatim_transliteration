@@ -22,12 +22,12 @@ else:
     
     for i, result in enumerate(results):
         print(result)
-        print(result.names) 
-        print(result.locale_name) 
-        print(result.display_name) 
+        print(result.names)
+        print(result.locale_name)
+        print(result.display_name)
 
         print('\nOriginal Result Display: ')
-        print(result.display_name) 
+        print(result.display_name)
 
         print('\nTransliterated Result Display: ')
         print(transliterate(result.display_name))
