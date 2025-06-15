@@ -13,6 +13,17 @@ async def search(query):
         return await api.search(query, address_details=True)
         # return await api.search(query)
 
+def load_languages(yaml_path='country_settings.yaml') -> dict:
+    with open(yaml_path, 'r') as file:
+        data = yaml.safe_load(file)
+
+    return {code.lower(): settings.get('languages', '').split(',') 
+            for code, settings in data.items()}
+
+def get_languages(result, lang_map):
+    code = result.country_code.lower()
+    return lang_map.get(code, [])  # defaults to empty list
+
 def prototype(results):
     if not results:
         print(f'Cannot find {variable}')
@@ -82,14 +93,16 @@ def get_locales(results):
 
 def result_transliterate(results, user_languages):
     for i, result in enumerate(results):
-        address_parts = transliterate(result, user_languages)
+        print(result.country_code)
+
+        address_parts = transliterate_iso(result, user_languages)
         print(f"{i + 1}. {', '.join(part for part in address_parts)}")
 
 def _transliterate(text, locales: napi.Locales): #  only latin transliteration for now
     return unidecode(text)
 
-def transliterate(result, user_languages: List) -> List[str]:
-    """ Based on Nominatim Localize 
+def transliterate_langdetect(result, user_languages: List) -> List[str]:
+    """ Based on Nominatim Localize and Detect Languages
         Assumes the user does not know the local language
     
         Set the local name of address parts according to the chosen
@@ -109,13 +122,50 @@ def transliterate(result, user_languages: List) -> List[str]:
         if line.isaddress and line.names:
             line.local_name = locales.display_name(line.names)
 
-            try:
-                language = detect(line.local_name) if len(line.local_name.strip()) >= 3 else None
-            except LangDetectException:
-                language = None
+            language = detect_language_langdetect(line)
 
-            print(language)
+            if not label_parts or label_parts[-1] != line.local_name:
+                if language in user_languages:
+                    label_parts.append(line.local_name)
+                else:
+                    label_parts.append(_transliterate(line.local_name, locales))
 
+    return label_parts
+
+def detect_language_langdetect(line):
+    try:
+        return detect(line.local_name) if len(line.local_name.strip()) >= 3 else None
+    except LangDetectException:
+        return None
+
+def transliterate_iso(result, user_languages: List) -> List[str]:
+    """ Based on Nominatim Localize and ISO regions
+        Assumes the user does not know the local language
+    
+        Set the local name of address parts according to the chosen
+        local, transliterating if not avaliable. 
+        Return the list of local names without duplicates.
+
+        Only address parts that are marked as isaddress are localized
+        and returned.
+    """
+    locales = napi.Locales(user_languages) 
+    lang_map = load_languages()
+    label_parts: List[str] = []
+
+    if bool(set(get_languages(result, lang_map)) & set(user_languages)):
+        return label_parts
+
+    if not result.address_rows:
+        return label_parts
+    
+
+    for line in result.address_rows:
+        if line.isaddress and line.names:
+            line.local_name = locales.display_name(line.names)
+
+            language = detect_language_langdetect(line)
+            
             if not label_parts or label_parts[-1] != line.local_name:
                 if language in user_languages:
                     label_parts.append(line.local_name)
@@ -128,4 +178,5 @@ variable = 'hospital in dandong'
 results = asyncio.run(search(f"{variable}"))
 
 # print(get_locales(results))
-result_transliterate(results,  ['zh-cn', 'fr'] )
+# also need to have zh, chinese, zh_hs, zh-cn be together?
+result_transliterate(results,  ['cn', 'fr'] )
