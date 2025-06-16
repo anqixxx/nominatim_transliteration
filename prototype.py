@@ -162,7 +162,8 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
     
     for line in result.address_rows:
         if line.isaddress and line.names:
-            line.local_name = locales.display_name(line.names)
+            if not iso:
+                line.local_name = locales.display_name(line.names)
 
             language = detect_language_langdetect(line)
             
