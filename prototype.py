@@ -26,7 +26,7 @@ def get_languages(result, lang_map):
 
 def prototype(results):
     if not results:
-        print(f'Cannot find {variable}')
+        print(f'No results found')
     else:
         print(f'Found a place at {results[0].centroid.x},{results[0].centroid.y}')
 
@@ -37,7 +37,7 @@ def prototype(results):
             print(f"{i + 1}. {', '.join(address_parts)}")
 
         print('\nDirect Localization to Chinese')
-        locale = napi.Locales(['chinese']) 
+        locale = napi.Locales(['zh']) 
         for i, result in enumerate(results):
             address_parts = result.address_rows.localize(locale)
             print(f"{i + 1}. {', '.join(address_parts)}")
@@ -93,8 +93,6 @@ def get_locales(results):
 
 def result_transliterate(results, user_languages):
     for i, result in enumerate(results):
-        print(result.country_code)
-
         address_parts = transliterate_iso(result, user_languages)
         print(f"{i + 1}. {', '.join(part for part in address_parts)}")
 
@@ -123,7 +121,7 @@ def transliterate_langdetect(result, user_languages: List) -> List[str]:
             line.local_name = locales.display_name(line.names)
 
             language = detect_language_langdetect(line)
-
+            print(language)
             if not label_parts or label_parts[-1] != line.local_name:
                 if language in user_languages:
                     label_parts.append(line.local_name)
@@ -159,13 +157,15 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
 
     if bool(set(get_languages(result, lang_map)) & set(user_languages)):
         iso = True
-    
+
     for line in result.address_rows:
         if line.isaddress and line.names:
+
             if not iso:
                 line.local_name = locales.display_name(line.names)
 
             language = detect_language_langdetect(line)
+            print(language)
             
             if not label_parts or label_parts[-1] != line.local_name:
                 if iso or language in user_languages:
@@ -181,3 +181,4 @@ results = asyncio.run(search(f"{variable}"))
 # print(get_locales(results))
 # also need to have zh, chinese, cn, zh_hs, zh-cn be together?
 result_transliterate(results,  ['zh', 'fr'] )
+# prototype(results)
