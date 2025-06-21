@@ -8,23 +8,41 @@ import yaml
 from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
 from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
 
+data = None  
+
 async def search(query):
+    """ Nominatim Search Query
+    """
     async with napi.NominatimAPIAsync() as api:
         return await api.search(query, address_details=True)
         # return await api.search(query)
 
-def load_languages(yaml_path='country_settings.yaml') -> dict:
+def load_languages(yaml_path='country_settings.yaml'):
+    """ Loads country_settings
+        Yaml files from Nominatim blob/master/settings/country_settings.yaml 
+    """
     with open(yaml_path, 'r') as file:
-        data = yaml.safe_load(file)
+        return yaml.safe_load(file)
 
-    return {code.lower(): settings.get('languages', '').split(',') 
-            for code, settings in data.items()}
+def get_languages(result):
+    """ Given a result, returns the languages associated with the region
 
-def get_languages(result, lang_map):
-    code = result.country_code.lower()
-    return lang_map.get(code, [])  # defaults to empty list
+        Special handling is needed for Macau and Hong Kong (not in yaml)
+    """
+    global data
+
+    if not data:
+        data = load_languages()
+
+    country = data.get(result.country_code.lower())
+    if country and 'languages' in country:
+        return [lang.strip() for lang in country['languages'].split(',')]
+    return []
 
 def prototype(results):
+    """ Initial transliteration prototype
+        Proof of concept
+    """
     if not results:
         print(f'No results found')
     else:
@@ -72,7 +90,10 @@ def prototype(results):
             address_parts = result.address_rows.localize(locale)
             print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
 
-def latin(text): # returns if it is latin based or not
+def latin(text): 
+    """ Given a text string, eturns if 
+        the string is Latin based or not
+    """
     for char in text:
         if char.isalpha():
             name = unicodedata.name(char, "")
@@ -81,6 +102,9 @@ def latin(text): # returns if it is latin based or not
     return True
 
 def get_locales(results):
+    """ Given a list of results, prints out all locales
+        associated with the results
+    """
     locale_set = set()
     for result in results:
         if result.names:
@@ -92,11 +116,21 @@ def get_locales(results):
     return sorted(locale_set)
 
 def result_transliterate(results, user_languages):
+    """ High level transliteration result wrapper
+
+        Prints out the transliterated results
+        No return type
+    """
     for i, result in enumerate(results):
         address_parts = transliterate_iso(result, user_languages)
         print(f"{i + 1}. {', '.join(part for part in address_parts)}")
 
 def _transliterate(text, locales: napi.Locales): #  only latin transliteration for now
+    """ Most granular transliteration component
+        Performs raw transliteration based on locales
+
+        Defaults to Latin
+    """
     return unidecode(text)
 
 def transliterate_langdetect(result, user_languages: List) -> List[str]:
@@ -148,14 +182,13 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
         and returned.
     """
     locales = napi.Locales(user_languages) 
-    lang_map = load_languages()
     label_parts: List[str] = []
     iso = False
 
     if not result.address_rows:
         return label_parts
-
-    if bool(set(get_languages(result, lang_map)) & set(user_languages)):
+    
+    if bool(set(get_languages(result)) & set(user_languages)):
         iso = True
 
     for line in result.address_rows:
@@ -177,8 +210,4 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
 
 variable = 'hospital in dandong'
 results = asyncio.run(search(f"{variable}"))
-
-# print(get_locales(results))
-# also need to have zh, chinese, cn, zh_hs, zh-cn be together?
-result_transliterate(results,  ['zh', 'fr'] )
-# prototype(results)
+result_transliterate(results, ['zh-cn'])
