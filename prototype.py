@@ -10,6 +10,7 @@ from langdetect import detect, LangDetectException # for now, until can figure o
 
 data = None  
 
+
 async def search(query):
     """ Nominatim Search Query
     """
@@ -17,12 +18,14 @@ async def search(query):
         return await api.search(query, address_details=True)
         # return await api.search(query)
 
+
 def load_languages(yaml_path='country_settings.yaml'):
     """ Loads country_settings
         Yaml files from Nominatim blob/master/settings/country_settings.yaml 
     """
     with open(yaml_path, 'r') as file:
         return yaml.safe_load(file)
+
 
 def get_languages(result):
     """ Given a result, returns the languages associated with the region
@@ -39,17 +42,18 @@ def get_languages(result):
         return [lang.strip() for lang in country['languages'].split(',')]
     return []
 
+
 def prototype(results):
     """ Initial transliteration prototype
         Proof of concept
     """
     if not results:
-        print(f'No results found')
+        print('No results found')
     else:
         print(f'Found a place at {results[0].centroid.x},{results[0].centroid.y}')
 
         print('\nOriginal Result: ')
-        locale = napi.Locales([]) 
+        locale = napi.Locales([])
         for i, result in enumerate(results):
             address_parts = result.address_rows.localize(locale)
             print(f"{i + 1}. {', '.join(address_parts)}")
@@ -60,7 +64,7 @@ def prototype(results):
             address_parts = result.address_rows.localize(locale)
             print(f"{i + 1}. {', '.join(address_parts)}")
 
-        locale = napi.Locales(['en']) 
+        locale = napi.Locales(['en'])
         print('\nDirect Localization to English:')
         for i, result in enumerate(results):
             address_parts = result.address_rows.localize(locale)
@@ -73,7 +77,7 @@ def prototype(results):
             print(f"{i + 1}. {', '.join(address_parts)}")
 
         print('\nTranliterated Result: ')
-        locale = napi.Locales(['chinese']) 
+        locale = napi.Locales(['chinese'])
         for i, result in enumerate(results):
             address_parts = result.address_rows.localize(locale)
             print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
@@ -85,13 +89,14 @@ def prototype(results):
             print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
 
         print('\n Combination Result French: ')
-        locale = napi.Locales(['fr']) 
+        locale = napi.Locales(['fr'])
         for i, result in enumerate(results):
             address_parts = result.address_rows.localize(locale)
             print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
 
-def latin(text): 
-    """ Given a text string, eturns if 
+
+def latin(text):
+    """ Given a text string, eturns if
         the string is Latin based or not
     """
     for char in text:
@@ -100,6 +105,7 @@ def latin(text):
             if 'LATIN' not in name:
                 return False
     return True
+
 
 def get_locales(results):
     """ Given a list of results, prints out all locales
@@ -115,6 +121,7 @@ def get_locales(results):
                     locale_set.update(row.names.keys())
     return sorted(locale_set)
 
+
 def result_transliterate(results, user_languages):
     """ High level transliteration result wrapper
 
@@ -122,10 +129,11 @@ def result_transliterate(results, user_languages):
         No return type
     """
     for i, result in enumerate(results):
-        address_parts = transliterate_iso(result, user_languages)
+        address_parts = transliterate(result, user_languages)
         print(f"{i + 1}. {', '.join(part for part in address_parts)}")
 
-def _transliterate(text, locales: napi.Locales): #  only latin transliteration for now
+
+def _transliterate(text, locales: napi.Locales):
     """ Most granular transliteration component
         Performs raw transliteration based on locales
 
@@ -133,61 +141,35 @@ def _transliterate(text, locales: napi.Locales): #  only latin transliteration f
     """
     return unidecode(text)
 
-def transliterate_langdetect(result, user_languages: List) -> List[str]:
-    """ Based on Nominatim Localize and Detect Languages
-        Assumes the user does not know the local language
-    
-        Set the local name of address parts according to the chosen
-        local, transliterating if not avaliable. 
-        Return the list of local names without duplicates.
 
-        Only address parts that are marked as isaddress are localized
-        and returned.
+def detect_language(text):
+    """ Given a string of characters, uses the langdetect library
+        to determine the language
     """
-    locales = napi.Locales(user_languages) 
-    label_parts: List[str] = []
-
-    if not result.address_rows:
-        return label_parts
-    
-    for line in result.address_rows:
-        if line.isaddress and line.names:
-            line.local_name = locales.display_name(line.names)
-
-            language = detect_language_langdetect(line)
-            print(language)
-            if not label_parts or label_parts[-1] != line.local_name:
-                if language in user_languages:
-                    label_parts.append(line.local_name)
-                else:
-                    label_parts.append(_transliterate(line.local_name, locales))
-
-    return label_parts
-
-def detect_language_langdetect(line):
     try:
-        return detect(line.local_name) if len(line.local_name.strip()) >= 3 else None
+        return detect(text) if len(text.strip()) >= 3 else None
     except LangDetectException:
         return None
 
-def transliterate_iso(result, user_languages: List) -> List[str]:
+
+def transliterate(result, user_languages: List) -> List[str]:
     """ Based on Nominatim Localize and ISO regions
         Assumes the user does not know the local language
-    
+
         Set the local name of address parts according to the chosen
-        local, transliterating if not avaliable. 
+        local, transliterating if not avaliable.
         Return the list of local names without duplicates.
 
         Only address parts that are marked as isaddress are localized
         and returned.
     """
-    locales = napi.Locales(user_languages) 
+    locales = napi.Locales(user_languages)
     label_parts: List[str] = []
     iso = False
 
     if not result.address_rows:
         return label_parts
-    
+
     if bool(set(get_languages(result)) & set(user_languages)):
         iso = True
 
@@ -197,9 +179,8 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
             if not iso:
                 line.local_name = locales.display_name(line.names)
 
-            language = detect_language_langdetect(line)
-            print(language)
-            
+            language = detect_language(line.local_name)
+
             if not label_parts or label_parts[-1] != line.local_name:
                 if iso or language in user_languages:
                     label_parts.append(line.local_name)
@@ -207,6 +188,7 @@ def transliterate_iso(result, user_languages: List) -> List[str]:
                     label_parts.append(_transliterate(line.local_name, locales))
 
     return label_parts
+
 
 variable = 'hospital in dandong'
 results = asyncio.run(search(f"{variable}"))
