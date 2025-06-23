@@ -21,6 +21,7 @@ class Transliterator():
         self.data = None
     
 data = None  
+dictionary = None
 
 async def search(query):
     """ Nominatim Search Query
@@ -29,6 +30,18 @@ async def search(query):
         return await api.search(query, address_details=True)
         # return await api.search(query)
 
+def lang_dictionary():
+    """ Mock idea for language mapping dictionary
+    """
+    dictionary = {
+        "zh": ["zh-cn", "zh-hans"],
+        "zh-cn": ["zh-cn", "zh-hans"],
+        "zh-hans": ["zh-hans", "zh-cn"],
+        "zh-hant": ["zh-hant", "zh-tw"],
+        "zh-tw": ["zh-tw", "zh-hant"],
+    }
+
+    return dictionary
 
 def load_languages(yaml_path='country_settings.yaml'):
     """ Loads country_settings
