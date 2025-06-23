@@ -144,20 +144,32 @@ def get_locales(results):
                     locale_set.update(row.names.keys())
     return sorted(locale_set)
 
+def result_locales(address_part, languages: List[str]):
+    """ Given a result address part component, return if True the user knows any
+        of the locales associated with the results and False if transliteration
+        is needed
+    """
+    if languages:
+        for language in languages:
+            target = f"name:{language}" 
+            if any(target in key for key in address_part.names.keys()):
+                return True
+    return False
 
-def result_transliterate(results, user_languages: List[str] = [""]) -> List[str]:
+
+def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
     """ High level transliteration result wrapper
 
         Prints out the transliterated results
         Returns output as list
     """
     output = []
-
     for i, result in enumerate(results):
         address_parts = transliterate(result, user_languages)
         print(f"{i + 1}. {', '.join(part.strip() for part in address_parts)}")
         output.append(", ".join(part.strip() for part in address_parts))
     return output
+
 
 def _transliterate(text, locales: napi.Locales):
     """ Most granular transliteration component
@@ -206,10 +218,8 @@ def transliterate(result, user_languages: List) -> List[str]:
                 line.local_name = locales.display_name(line.names)
                 # print(line.names) # For test cases, to see what names are avaliable
 
-            language = detect_language(line.local_name)
-            print(language)
             if not label_parts or label_parts[-1] != line.local_name:
-                if iso or language in user_languages:
+                if iso or result_locales(line, user_languages):
                     label_parts.append(line.local_name)
                 else:
                     label_parts.append(_transliterate(line.local_name, locales))

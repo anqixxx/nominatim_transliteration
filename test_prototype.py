@@ -48,10 +48,11 @@ def test_transliterate_ps():
         but all aspects in the users non latin locale sould be not in latin
 
         ISSUE RIGHT NOW: langdetect detects ps (Afghanistan) as ur (Pakistan)
+        FIXED: With locale key search
     """
     variable = 'hospital in dandong'
     results = asyncio.run(search(f"{variable}"))
-    output = result_transliterate(results, ['ps'])
+    output = result_transliterate(results, ['ps'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, چين"
 
 def test_transliterate_he():
@@ -62,10 +63,11 @@ def test_transliterate_he():
         but all aspects in the users non latin locale sould be not in latin
 
         ISSUE RIGHT NOW: Hebrew is somehow flipped in the script
+        FIXED: With locale key search
     """
     variable = 'hospital in dandong'
     results = asyncio.run(search(f"{variable}"))
-    output = result_transliterate(results, ['he'])
+    output = result_transliterate(results, ['he'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, סין"
 
 def test_transliterate_km():
@@ -76,8 +78,9 @@ def test_transliterate_km():
         but all aspects in the users non latin locale sould be not in latin
 
         ISSUE RIGHT NOW: langdetect does not detect Cambodian
+        FIXED: With locale key search
     """
     variable = 'hospital in dandong'
     results = asyncio.run(search(f"{variable}"))
-    output = result_transliterate(results, ['he'])
+    output = result_transliterate(results, ['km'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, ចិន"
