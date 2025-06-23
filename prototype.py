@@ -178,7 +178,7 @@ def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
 
     output = []
     user_languages = [_dictionary.get(lang, lang) for lang in user_languages]
-    
+
     for i, result in enumerate(results):
         address_parts = transliterate(result, user_languages)
         print(f"{i + 1}. {', '.join(part.strip() for part in address_parts)}")
@@ -193,22 +193,22 @@ def _transliterate(line: napi.AddressLine, locales: List[str]):
         Defaults to Latin
     """
     for locale in locales:
-        _function = f"{locale}_transliterate"
+        # Need to replace to be a valid function
+        _function = f"{locale.replace("-", "_")}_transliterate"
         if _function in globals():
             print(f"{locale} transliteration successful")
             return globals()[_function](line)
-        print(locale)
-        print(type(locale))
     
     print("defaulting to latin based transliteration")
     return unidecode(line.local_name)
 
 def zh_hans_transliterate(line: napi.AddressLine):
     """ If in Traditional Chinese, convert to Simplified
+        NOT TESTED, PROOF OF CONCEPT
 
         Else switch to standard Latin default transliteration
     """
-    if result_locales(line, ['zh_hant']):
+    if result_locales(line, ['zh-hant']):
         converter = opencc.OpenCC('t2s.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
         return converter.convert(line.local_name)
     return unidecode(line.local_name)
@@ -219,7 +219,7 @@ def zh_hant_transliterate(line: napi.AddressLine):
 
         Else switch to standard Latin default transliteration
     """
-    if result_locales(line, ['zh_hans']):
+    if result_locales(line, ['zh-hans']) or result_locales(line, ['zh']): # also need a way to know it its in chinese or not
         converter = opencc.OpenCC('s2t.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
         return converter.convert(line.local_name)
     return unidecode(line.local_name)
@@ -266,7 +266,6 @@ def transliterate(result, user_languages: List) -> List[str]:
                 if iso or result_locales(line, user_languages):
                     label_parts.append(line.local_name)
                 else:
-                    print(type(line))
                     label_parts.append(_transliterate(line, user_languages))
 
     return label_parts
@@ -276,5 +275,5 @@ variable = 'hospital in dandong'
 # variable = 'school in dandong'
 results = asyncio.run(search(f"{variable}"))
 result_transliterate(results, ['en'])
-o = result_transliterate(results, ['ja'])
+o = result_transliterate(results, ['zh-hant'])
 print(o)
