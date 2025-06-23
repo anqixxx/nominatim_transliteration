@@ -7,9 +7,20 @@ import asyncio
 import yaml
 from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
 from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
+from nominatim_api.typing import Protocol
+from nominatim_api.config import Configuration
+from nominatim_db.db.connection import Connection
 
+class Transliterator():
+    """
+        Class handling the process of transliteration from search results.
+    """
+    def __init__(self, config: Configuration, conn: Connection) -> None:
+        self.config = config
+        self.db_connection = conn
+        self.data = None
+    
 data = None  
-
 
 async def search(query):
     """ Nominatim Search Query
@@ -25,7 +36,6 @@ def load_languages(yaml_path='country_settings.yaml'):
     """
     with open(yaml_path, 'r') as file:
         return yaml.safe_load(file)
-
 
 def get_languages(result):
     """ Given a result, returns the languages associated with the region
@@ -122,16 +132,19 @@ def get_locales(results):
     return sorted(locale_set)
 
 
-def result_transliterate(results, user_languages):
+def result_transliterate(results, user_languages: List[str] = [""]) -> List[str]:
     """ High level transliteration result wrapper
 
         Prints out the transliterated results
-        No return type
+        Returns output as list
     """
+    output = []
+
     for i, result in enumerate(results):
         address_parts = transliterate(result, user_languages)
-        print(f"{i + 1}. {', '.join(part for part in address_parts)}")
-
+        print(f"{i + 1}. {', '.join(part.strip() for part in address_parts)}")
+        output.append(", ".join(part.strip() for part in address_parts))
+    return output
 
 def _transliterate(text, locales: napi.Locales):
     """ Most granular transliteration component
@@ -178,9 +191,10 @@ def transliterate(result, user_languages: List) -> List[str]:
 
             if not iso:
                 line.local_name = locales.display_name(line.names)
+                # print(line.names) # For test cases, to see what names are avaliable
 
             language = detect_language(line.local_name)
-
+            print(language)
             if not label_parts or label_parts[-1] != line.local_name:
                 if iso or language in user_languages:
                     label_parts.append(line.local_name)
@@ -191,5 +205,9 @@ def transliterate(result, user_languages: List) -> List[str]:
 
 
 variable = 'hospital in dandong'
+# variable = 'school in dandong'
 results = asyncio.run(search(f"{variable}"))
-result_transliterate(results, ['zh-cn'])
+result_transliterate(results, ['en'])
+o = result_transliterate(results, ['ps'])
+o = result_transliterate(results, ['km'])
+print(o)
