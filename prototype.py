@@ -4,6 +4,7 @@ import unicodedata
 import nominatim_api as napi
 from unidecode import unidecode
 import asyncio
+import opencc
 import yaml
 from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
 from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
@@ -21,7 +22,7 @@ class Transliterator():
         self.data = None
     
 data = None  
-dictionary = None
+_dictionary = None
 
 async def search(query):
     """ Nominatim Search Query
@@ -30,18 +31,23 @@ async def search(query):
         return await api.search(query, address_details=True)
         # return await api.search(query)
 
+
 def lang_dictionary():
     """ Mock idea for language mapping dictionary
+
+        Hoping to standardize certain names, i.e.
+        zh and zh-cn will always map to zh-hans
+        zh-tw will always map to zh-hant
     """
-    dictionary = {
-        "zh": ["zh-cn", "zh-hans"],
-        "zh-cn": ["zh-cn", "zh-hans"],
-        "zh-hans": ["zh-hans", "zh-cn"],
-        "zh-hant": ["zh-hant", "zh-tw"],
-        "zh-tw": ["zh-tw", "zh-hant"],
+    global _dictionary
+    _dictionary = {
+        "zh": "zh-hans",
+        "zh-cn": "zh-hans",
+        "zh-tw": "zh-hant",
     }
 
-    return dictionary
+    return _dictionary
+
 
 def load_languages(yaml_path='country_settings.yaml'):
     """ Loads country_settings
@@ -49,6 +55,7 @@ def load_languages(yaml_path='country_settings.yaml'):
     """
     with open(yaml_path, 'r') as file:
         return yaml.safe_load(file)
+
 
 def get_languages(result):
     """ Given a result, returns the languages associated with the region
@@ -144,6 +151,7 @@ def get_locales(results):
                     locale_set.update(row.names.keys())
     return sorted(locale_set)
 
+
 def result_locales(address_part, languages: List[str]):
     """ Given a result address part component, return if True the user knows any
         of the locales associated with the results and False if transliteration
@@ -163,7 +171,14 @@ def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
         Prints out the transliterated results
         Returns output as list
     """
+    global _dictionary
+
+    if not _dictionary:
+        lang_dictionary()
+
     output = []
+    user_languages = [_dictionary.get(lang, lang) for lang in user_languages]
+    
     for i, result in enumerate(results):
         address_parts = transliterate(result, user_languages)
         print(f"{i + 1}. {', '.join(part.strip() for part in address_parts)}")
@@ -171,13 +186,43 @@ def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
     return output
 
 
-def _transliterate(text, locales: napi.Locales):
+def _transliterate(line: napi.AddressLine, locales: List[str]):
     """ Most granular transliteration component
         Performs raw transliteration based on locales
 
         Defaults to Latin
     """
-    return unidecode(text)
+    for locale in locales:
+        _function = f"{locale}_transliterate"
+        if _function in globals():
+            print(f"{locale} transliteration successful")
+            return globals()[_function](line)
+        print(locale)
+        print(type(locale))
+    
+    print("defaulting to latin based transliteration")
+    return unidecode(line.local_name)
+
+def zh_hans_transliterate(line: napi.AddressLine):
+    """ If in Traditional Chinese, convert to Simplified
+
+        Else switch to standard Latin default transliteration
+    """
+    if result_locales(line, ['zh_hant']):
+        converter = opencc.OpenCC('t2s.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
+        return converter.convert(line.local_name)
+    return unidecode(line.local_name)
+
+
+def zh_hant_transliterate(line: napi.AddressLine):
+    """ If in Simplified Chinese, convert to Traditional
+
+        Else switch to standard Latin default transliteration
+    """
+    if result_locales(line, ['zh_hans']):
+        converter = opencc.OpenCC('s2t.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
+        return converter.convert(line.local_name)
+    return unidecode(line.local_name)
 
 
 def detect_language(text):
@@ -201,7 +246,6 @@ def transliterate(result, user_languages: List) -> List[str]:
         Only address parts that are marked as isaddress are localized
         and returned.
     """
-    locales = napi.Locales(user_languages)
     label_parts: List[str] = []
     iso = False
 
@@ -215,14 +259,15 @@ def transliterate(result, user_languages: List) -> List[str]:
         if line.isaddress and line.names:
 
             if not iso:
-                line.local_name = locales.display_name(line.names)
+                line.local_name = napi.Locales(user_languages).display_name(line.names)
                 # print(line.names) # For test cases, to see what names are avaliable
 
             if not label_parts or label_parts[-1] != line.local_name:
                 if iso or result_locales(line, user_languages):
                     label_parts.append(line.local_name)
                 else:
-                    label_parts.append(_transliterate(line.local_name, locales))
+                    print(type(line))
+                    label_parts.append(_transliterate(line, user_languages))
 
     return label_parts
 
@@ -231,6 +276,5 @@ variable = 'hospital in dandong'
 # variable = 'school in dandong'
 results = asyncio.run(search(f"{variable}"))
 result_transliterate(results, ['en'])
-o = result_transliterate(results, ['ps'])
-o = result_transliterate(results, ['km'])
+o = result_transliterate(results, ['ja'])
 print(o)
