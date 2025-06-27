@@ -41,9 +41,9 @@ def lang_dictionary():
     """
     global _dictionary
     _dictionary = {
-        "zh": "zh-hans",
-        "zh-cn": "zh-hans",
-        "zh-tw": "zh-hant",
+        "zh": "zh-Hans",
+        "zh-cn": "zh-Hans",
+        "zh-tw": "zh-hHant",
     }
 
     return _dictionary
@@ -160,7 +160,11 @@ def result_locales(address_part, languages: List[str]):
     if languages:
         for language in languages:
             target = f"name:{language}" 
-            if any(target in key for key in address_part.names.keys()):
+            if target in address_part.names.keys():
+                return True
+        
+            target = f"alt_name:{language}" 
+            if target in address_part.names.keys(): 
                 return True
     return False
 
@@ -202,7 +206,8 @@ def _transliterate(line: napi.AddressLine, locales: List[str]):
     print("defaulting to latin based transliteration")
     return unidecode(line.local_name)
 
-def zh_hans_transliterate(line: napi.AddressLine):
+
+def zh_Hans_transliterate(line: napi.AddressLine):
     """ If in Traditional Chinese, convert to Simplified
         NOT TESTED, PROOF OF CONCEPT
 
@@ -214,7 +219,7 @@ def zh_hans_transliterate(line: napi.AddressLine):
     return unidecode(line.local_name)
 
 
-def zh_hant_transliterate(line: napi.AddressLine):
+def zh_Hant_transliterate(line: napi.AddressLine):
     """ If in Simplified Chinese, convert to Traditional
 
         Else switch to standard Latin default transliteration
@@ -252,7 +257,7 @@ def transliterate(result, user_languages: List) -> List[str]:
     if not result.address_rows:
         return label_parts
 
-    if bool(set(get_languages(result)) & set(user_languages)):
+    if bool(set(get_languages(result)) & set(user_languages)): # in one language, do this, if not, do that
         iso = True
 
     for line in result.address_rows:

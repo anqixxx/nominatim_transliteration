@@ -345,7 +345,7 @@ cm:
 # China (中国)
 cn:
     partition: 117
-    languages: zh, zh-cn, zh-hans
+    languages: zh, zh-cn, zh-Hans
     names: !include country-names/cn.yaml
     postcode:
       pattern: "dddddd"
