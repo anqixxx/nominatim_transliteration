@@ -1,7 +1,7 @@
 import pytest
 import nominatim_api as napi
 import asyncio
-from prototype import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, parse_lang
+from prototype import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, parse_lang, decode_canto
 
 async def search(query):
     """ Nominatim Search Query
@@ -129,5 +129,14 @@ def test_parsing_zh():
     """
     test_header = "zh;q=0.9,zh-cn;q=0.8,zh-Hans-CN;q=0.7"
     output = parse_lang(test_header)
-    print(output)
     assert output == ['zh-Hans', 'zh-Hans', 'zh-Hans']
+
+def test_canto_transliterate():
+    """ Cantonese transliteration to Latin test
+
+        Tests to see if transliteration can accurately convert to 
+        Cantonese
+    """
+    test_str = "梁國雄"
+    output = decode_canto(test_str)
+    assert output == "leung gwok hung"

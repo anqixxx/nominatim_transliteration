@@ -6,6 +6,7 @@ from unidecode import unidecode
 import asyncio
 import opencc
 import yaml
+from cantoroman import Cantonese # only works from cantonese (written zh-Hant script) to latin
 from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
 from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
 from nominatim_api.typing import Protocol
@@ -203,12 +204,30 @@ def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
     return output
 
 
-def _transliterate(line: napi.AddressLine, locales: List[str]):
+def decode_canto(line: str) -> str:
+    """ Takes in a string in Cantonese and returns the Latin
+        transliterated version. 
+        Uses the cantoroman library, named as so to be homogenous
+        with unidecode
+
+        For cases with multiple pronounciation, the first is always taken
+    """
+    cantonese = Cantonese() # perhaps make into global variable later
+    cantonese_line = ""
+    for char in line:
+        cantonese_line += cantonese.getRoman(char)[0][0] # python uppercase first line
+        cantonese_line += ' '
+    return cantonese_line.strip()
+
+
+def _transliterate(line: napi.AddressLine, locales: List[str], in_cantonese: bool = False):
     """ Most granular transliteration component
         Performs raw transliteration based on locales
 
         Defaults to Latin
     """
+    # in_cantonese is a placeholder for now until we determine HK and Macau mapping
+
     for locale in locales:
         # Need to replace to be a valid function
         _function = f"{locale.replace("-", "_")}_transliterate"
@@ -217,7 +236,10 @@ def _transliterate(line: napi.AddressLine, locales: List[str]):
             return globals()[_function](line)
     
     print("defaulting to latin based transliteration")
-    return unidecode(line.local_name)
+    if not in_cantonese:
+        return unidecode(line.local_name)
+    else:
+        return decode_canto(line.local_name)
 
 
 def zh_Hans_transliterate(line: napi.AddressLine):
@@ -334,3 +356,5 @@ print("User preferred languages:", user_languages)
 print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
 print(type(user_languages))
 print(result_transliterate(results, user_languages))
+
+print(decode_canto('梁國雄'))
