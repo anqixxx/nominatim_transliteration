@@ -45,13 +45,17 @@ def normalize_lang(lang):
         https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes 
     """
     # Potentially make this a global variable (or object field) to reduce compute
+    # For zh-Latn-pinyin and zh-Latn, I did not include this as it is not really a spoken language
+    # For now, no dialect support
     lang_dict = {
         "zh": "zh-Hans",
         "zh-cn": "zh-Hans",
         "zh-tw": "zh-Hant",
         "zh-hans": "zh-Hans",
         "zh-hant": "zh-Hant",
+        "zh-Hans-CN": "zh-Hans"
     }
+
     if lang in lang_dict:
     #  Ordering nessecary due to zh edge case (no '-')
         return lang_dict[lang]
