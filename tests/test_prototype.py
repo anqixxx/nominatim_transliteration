@@ -1,7 +1,8 @@
 import pytest
 import nominatim_api as napi
 import asyncio
-from prototype import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, parse_lang, decode_canto
+from src.normalization import parse_lang
+from src.transliterate import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, decode_canto
 
 async def search(query):
     """ Nominatim Search Query

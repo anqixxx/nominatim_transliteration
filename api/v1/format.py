@@ -90,3 +90,4 @@ def _format_search_anqi(results: SearchResults,
 
     return format_base_json(results, options, False,
                                         class_label='class')
+

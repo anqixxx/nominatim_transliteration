@@ -12,6 +12,10 @@ from langdetect import detect, LangDetectException # for now, until can figure o
 from nominatim_api.typing import Protocol
 from nominatim_api.config import Configuration
 from nominatim_db.db.connection import Connection
+from normalization import normalize_lang
+
+data = None
+
 
 class Transliterator():
     """
@@ -21,51 +25,6 @@ class Transliterator():
         self.config = config
         self.db_connection = conn
         self.data = None
-    
-data = None  
-
-async def search(query):
-    """ Nominatim Search Query
-    """
-    async with napi.NominatimAPIAsync() as api:
-        return await api.search(query, address_details=True)
-        # return await api.search(query)
-
-
-def normalize_lang(lang):
-    """ Mock idea for language mapping dictionary
-
-        Hoping to standardize certain names, i.e.
-        zh and zh-cn will always map to zh-hans
-        zh-tw will always map to zh-hant
-
-        For all other languages, follow Nominatim precedent
-        and just concatenate after the '-'
-
-        Code assumes all language codes are in two letter format
-        https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes 
-    """
-    # Potentially make this a global variable (or object field) to reduce compute
-    # For zh-Latn-pinyin and zh-Latn, I did not include this as it is not really a spoken language
-    # For now, no dialect support
-    lang_dict = {
-        "zh": "zh-Hans",
-        "zh-cn": "zh-Hans",
-        "zh-tw": "zh-Hant",
-        "zh-hans": "zh-Hans",
-        "zh-hant": "zh-Hant",
-        "zh-Hans-CN": "zh-Hans",
-        "zh-cmn": "zh-Hans",
-        "zh-cmn-Hans": "zh-Hans",
-        "zh-cmn-Hant": "zh-Hant"
-    }
-
-    if lang in lang_dict:
-    #  Ordering nessecary due to zh edge case (no '-')
-        return lang_dict[lang]
-    elif '-' not in lang:
-        return lang
-    return lang.split('-')[0] 
 
 
 def load_languages(yaml_path='country_settings.yaml'):
@@ -90,58 +49,6 @@ def get_languages(result):
     if country and 'languages' in country:
         return [lang.strip() for lang in country['languages'].split(',')]
     return []
-
-
-def prototype(results):
-    """ Initial transliteration prototype
-        Proof of concept
-    """
-    if not results:
-        print('No results found')
-    else:
-        print(f'Found a place at {results[0].centroid.x},{results[0].centroid.y}')
-
-        print('\nOriginal Result: ')
-        locale = napi.Locales([])
-        for i, result in enumerate(results):
-            address_parts = result.address_rows.localize(locale)
-            print(f"{i + 1}. {', '.join(address_parts)}")
-
-        print('\nDirect Localization to Chinese')
-        locale = napi.Locales(['zh']) 
-        for i, result in enumerate(results):
-            address_parts = result.address_rows.localize(locale)
-            print(f"{i + 1}. {', '.join(address_parts)}")
-
-        locale = napi.Locales(['en'])
-        print('\nDirect Localization to English:')
-        for i, result in enumerate(results):
-            address_parts = result.address_rows.localize(locale)
-            print(f"{i + 1}. {', '.join(address_parts)}")
-
-        locale = napi.Locales(['fr']) 
-        print('\nDirect Localization to French:')
-        for i, result in enumerate(results):
-            address_parts = result.address_rows.localize(locale)
-            print(f"{i + 1}. {', '.join(address_parts)}")
-
-        print('\nTranliterated Result: ')
-        locale = napi.Locales(['chinese'])
-        for i, result in enumerate(results):
-            address_parts = result.address_rows.localize(locale)
-            print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
-
-        print('\n Combination Result English: ')
-        locale = napi.Locales(['en']) 
-        for i, result in enumerate(results):
-            address_parts = result.address_rows.localize(locale)
-            print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
-
-        print('\n Combination Result French: ')
-        locale = napi.Locales(['fr'])
-        for i, result in enumerate(results):
-            address_parts = result.address_rows.localize(locale)
-            print(f"{i + 1}. {', '.join(unidecode(part) for part in address_parts)}")
 
 
 def latin(text):
@@ -265,6 +172,17 @@ def zh_Hant_transliterate(line: napi.AddressLine):
     return unidecode(line.local_name)
 
 
+def yue_transliterate(line: napi.AddressLine):
+    """ If in Simplified Chinese, convert to Traditional
+
+        Else switch to standard Latin default transliteration
+    """
+    if result_locales(line, ['zh-hans']) or result_locales(line, ['zh']): # also need a way to know it its in chinese or not
+        converter = opencc.OpenCC('s2t.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
+        return converter.convert(line.local_name)
+    return unidecode(line.local_name)
+
+
 def detect_language(text):
     """ Given a string of characters, uses the langdetect library
         to determine the language
@@ -304,6 +222,8 @@ def transliterate(result, user_languages: List) -> List[str]:
             if not iso:
                 line.local_name = napi.Locales(user_languages).display_name(line.names)
                 # print(line.names) # For test cases, to see what names are avaliable
+                # dont use this function for Locales
+                # want to replace this
 
             if not label_parts or label_parts[-1] != line.local_name:
                 if iso or result_locales(line, user_languages):
@@ -313,48 +233,3 @@ def transliterate(result, user_languages: List) -> List[str]:
                     label_parts.append(_transliterate(line, user_languages))
 
     return label_parts
-
-def parse_lang(header) -> List[str]:
-    """ Parse Accept-Language HTTP header into a list of normalized language codes
-        Uses Nominatim Locales class to do so
-
-        Is it better to place normalize lang here instead of in transliterate?
-        I am just worried about breaking upstream processes
-    """
-    languages = napi.Locales.from_accept_languages(header).languages
-    return [normalize_lang(lang) for lang in languages] # both here and in transliterate, need to think about best logic flow
-    # in final result, parse_lang will probably be part of larger script, just here right now in this form for testing modularity
-    # should we allow for duplicates? this is only probably a big issue in English
-    # would probably be better code if not
-
-variable = 'hospital in dandong'
-# variable = 'school in dandong'
-results = asyncio.run(search(f"{variable}"))
-result_transliterate(results, ['en'])
-o = result_transliterate(results, ['fr', 'en'])
-print(o)
-
-test_header = "zh-hans, zh;q=0.9, en;q=0.8"
-user_languages = parse_lang(test_header)
-results = asyncio.run(search(variable))
-print("User preferred languages:", user_languages)
-print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
-print(result_transliterate(results, user_languages))
-
-marc_header = "en-US,en;q=0.5"
-user_languages = parse_lang(marc_header)
-results = asyncio.run(search(variable))
-print("User preferred languages:", user_languages)
-print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
-print(type(user_languages))
-print(result_transliterate(results, user_languages))
-
-anqi_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
-user_languages = parse_lang(anqi_header)
-results = asyncio.run(search(variable))
-print("User preferred languages:", user_languages)
-print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
-print(type(user_languages))
-print(result_transliterate(results, user_languages))
-
-print(decode_canto('梁國雄'))
