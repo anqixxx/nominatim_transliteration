@@ -131,6 +131,19 @@ def test_parsing_zh():
     output = parse_lang(test_header)
     assert output == ['zh-Hans', 'zh-Hans', 'zh-Hans']
 
+def test_parsing_transliterate():
+    """ Base HTML Header Parsing test + Transliteration
+        to see if it can properly concatanate and 
+        extract the proper naming conventions
+
+        Checks if the prototype can differentiate between English Variants
+    """
+    test_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
+    variable = 'school in dandong'
+    results = asyncio.run(search(f"{variable}"))
+    output = result_transliterate(results, parse_lang(test_header))[0]
+    assert output == "Dan Dong Shi Di Liu Zhong Xue, Qi Wei Lu, Zhanqian Subdistrict, Dandong, Zhenxing, 118000, China"
+
 def test_canto_transliterate():
     """ Cantonese transliteration to Latin test
 
@@ -139,4 +152,4 @@ def test_canto_transliterate():
     """
     test_str = "梁國雄"
     output = decode_canto(test_str)
-    assert output == "Leung Qwok Hung"
+    assert output == "Leung Gwok Hung"
