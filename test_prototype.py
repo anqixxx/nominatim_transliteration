@@ -1,7 +1,7 @@
 import pytest
 import nominatim_api as napi
 import asyncio
-from prototype import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate
+from prototype import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, parse_lang
 
 async def search(query):
     """ Nominatim Search Query
@@ -110,3 +110,24 @@ def test_transliterate_region():
     results = asyncio.run(search(f"{variable}"))
     output = result_transliterate(results, ['fr', 'en-US'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jinshan Main Street, Zhanqian Subdistrict, Yuanbao, Zhenxing, 118000, Chine"
+
+def test_parsing_en():
+    """ Base HTML Header Parsing test to see if it can properly concatanate and 
+        extract the proper naming conventions
+
+        Checks if the prototype can differentiate between English Variants
+    """
+    test_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
+    output = parse_lang(test_header)
+    assert output == ['en', 'en', 'en', 'en']
+
+def test_parsing_zh():
+    """ Base HTML Header Parsing test to see if it can properly concatanate and 
+        extract the proper naming conventions
+
+        Checks if the prototype can differentiate between Chinese Variants
+    """
+    test_header = "zh;q=0.9,zh-cn;q=0.8,zh-Hans-CN;q=0.7"
+    output = parse_lang(test_header)
+    print(output)
+    assert output == ['zh-Hans', 'zh-Hans', 'zh-Hans']

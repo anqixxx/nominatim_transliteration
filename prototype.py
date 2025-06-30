@@ -53,7 +53,10 @@ def normalize_lang(lang):
         "zh-tw": "zh-Hant",
         "zh-hans": "zh-Hans",
         "zh-hant": "zh-Hant",
-        "zh-Hans-CN": "zh-Hans"
+        "zh-Hans-CN": "zh-Hans",
+        "zh-cmn": "zh-Hans",
+        "zh-cmn-Hans": "zh-Hans",
+        "zh-cmn-Hant": "zh-Hant"
     }
 
     if lang in lang_dict:
@@ -296,7 +299,9 @@ def parse_lang(header) -> List[str]:
         Is it better to place normalize lang here instead of in transliterate?
         I am just worried about breaking upstream processes
     """
-    return napi.Locales.from_accept_languages(header).languages
+    languages = napi.Locales.from_accept_languages(header).languages
+    return [normalize_lang(lang) for lang in languages] # both here and in transliterate, need to think about best logic flow
+    # in final result, parse_lang will probably be part of larger script, just here right now in this form for testing modularity
 
 
 variable = 'hospital in dandong'
@@ -315,6 +320,14 @@ print(result_transliterate(results, user_languages))
 
 marc_header = "en-US,en;q=0.5"
 user_languages = parse_lang(marc_header)
+results = asyncio.run(search(variable))
+print("User preferred languages:", user_languages)
+print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
+print(type(user_languages))
+print(result_transliterate(results, user_languages))
+
+anqi_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
+user_languages = parse_lang(anqi_header)
 results = asyncio.run(search(variable))
 print("User preferred languages:", user_languages)
 print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
