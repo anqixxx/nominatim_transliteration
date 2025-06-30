@@ -60,7 +60,7 @@ def test_transliterate_he():
         and only knows a non-latin language
 
         Results should show that the result is transliterated to latin (for now)
-        but all aspects in the users non latin locale sould be not in latin
+        but all aspects in the users non latin locale should be not in latin
 
         ISSUE RIGHT NOW: Hebrew is somehow flipped in the script
         FIXED: With locale key search
@@ -75,7 +75,7 @@ def test_transliterate_km():
         and only knows a non-latin language
 
         Results should show that the result is transliterated to latin (for now)
-        but all aspects in the users non latin locale sould be not in latin
+        but all aspects in the users non latin locale should be not in latin
 
         ISSUE RIGHT NOW: langdetect does not detect Cambodian
         FIXED: With locale key search
@@ -84,3 +84,29 @@ def test_transliterate_km():
     results = asyncio.run(search(f"{variable}"))
     output = result_transliterate(results, ['km'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, ចិន"
+
+def test_transliterate_two():
+    """ Base transliteration test where the user does not know the local language
+        and only knows two latin languages (French and English)
+
+        Results should show that the result is shown in French and English, with a preference for French
+        All non-latin components should then be translated to Latin
+    """
+    variable = 'hospital in dandong'
+    results = asyncio.run(search(f"{variable}"))
+    output = result_transliterate(results, ['fr', 'en'])[0]
+    assert output == "Dan Dong Shi Zhong Yi Yuan, Jinshan Main Street, Zhanqian Subdistrict, Yuanbao, Zhenxing, 118000, Chine"
+
+
+def test_transliterate_region():
+    """ Base transliteration test where the user does not know the local language
+        and only knows two latin languages (French and English), but the browser gives 
+        region specific language (en-US)
+
+        Results should show that the result is shown in French and English, with a preference for French
+        All non-latin components should then be translated to Latin
+    """
+    variable = 'hospital in dandong'
+    results = asyncio.run(search(f"{variable}"))
+    output = result_transliterate(results, ['fr', 'en-US'])[0]
+    assert output == "Dan Dong Shi Zhong Yi Yuan, Jinshan Main Street, Zhanqian Subdistrict, Yuanbao, Zhenxing, 118000, Chine"

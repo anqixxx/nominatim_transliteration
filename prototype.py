@@ -22,7 +22,6 @@ class Transliterator():
         self.data = None
     
 data = None  
-_dictionary = None
 
 async def search(query):
     """ Nominatim Search Query
@@ -32,21 +31,33 @@ async def search(query):
         # return await api.search(query)
 
 
-def lang_dictionary():
+def normalize_lang(lang):
     """ Mock idea for language mapping dictionary
 
         Hoping to standardize certain names, i.e.
         zh and zh-cn will always map to zh-hans
         zh-tw will always map to zh-hant
+
+        For all other languages, follow Nominatim precedent
+        and just concatenate after the '-'
+
+        Code assumes all language codes are in two letter format
+        https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes 
     """
-    global _dictionary
-    _dictionary = {
+    # Potentially make this a global variable (or object field) to reduce compute
+    lang_dict = {
         "zh": "zh-Hans",
         "zh-cn": "zh-Hans",
-        "zh-tw": "zh-hHant",
+        "zh-tw": "zh-Hant",
+        "zh-hans": "zh-Hans",
+        "zh-hant": "zh-Hant",
     }
-
-    return _dictionary
+    if lang in lang_dict:
+    #  Ordering nessecary due to zh edge case (no '-')
+        return lang_dict[lang]
+    elif '-' not in lang:
+        return lang
+    return lang.split('-')[0] 
 
 
 def load_languages(yaml_path='country_settings.yaml'):
@@ -175,13 +186,8 @@ def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
         Prints out the transliterated results
         Returns output as list
     """
-    global _dictionary
-
-    if not _dictionary:
-        lang_dictionary()
-
     output = []
-    user_languages = [_dictionary.get(lang, lang) for lang in user_languages]
+    user_languages = [normalize_lang(lang) for lang in user_languages]
 
     for i, result in enumerate(results):
         address_parts = transliterate(result, user_languages)
@@ -257,7 +263,10 @@ def transliterate(result, user_languages: List) -> List[str]:
     if not result.address_rows:
         return label_parts
 
-    if bool(set(get_languages(result)) & set(user_languages)): # in one language, do this, if not, do that
+    local_languages = get_languages(result)
+    print(local_languages)
+    print(user_languages)
+    if len(local_languages) == 1 and local_languages[0] in user_languages:
         iso = True
 
     for line in result.address_rows:
@@ -269,16 +278,41 @@ def transliterate(result, user_languages: List) -> List[str]:
 
             if not label_parts or label_parts[-1] != line.local_name:
                 if iso or result_locales(line, user_languages):
+                    print(f"no transliteration needed for {line.local_name}")
                     label_parts.append(line.local_name)
                 else:
                     label_parts.append(_transliterate(line, user_languages))
 
     return label_parts
 
+def parse_lang(header) -> List[str]:
+    """ Parse Accept-Language HTTP header into a list of normalized language codes
+        Uses Nominatim Locales class to do so
+
+        Is it better to place normalize lang here instead of in transliterate?
+        I am just worried about breaking upstream processes
+    """
+    return napi.Locales.from_accept_languages(header).languages
+
 
 variable = 'hospital in dandong'
 # variable = 'school in dandong'
 results = asyncio.run(search(f"{variable}"))
 result_transliterate(results, ['en'])
-o = result_transliterate(results, ['zh-hant'])
+o = result_transliterate(results, ['fr', 'en'])
 print(o)
+
+test_header = "zh-hans, zh;q=0.9, en;q=0.8"
+user_languages = parse_lang(test_header)
+results = asyncio.run(search(variable))
+print("User preferred languages:", user_languages)
+print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
+print(result_transliterate(results, user_languages))
+
+marc_header = "en-US,en;q=0.5"
+user_languages = parse_lang(marc_header)
+results = asyncio.run(search(variable))
+print("User preferred languages:", user_languages)
+print("User preferred languages changed:", [normalize_lang(lang) for lang in user_languages])
+print(type(user_languages))
+print(result_transliterate(results, user_languages))

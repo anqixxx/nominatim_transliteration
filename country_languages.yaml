@@ -1,4 +1,4 @@
-# Added as standin to mimic Nominatim
+# Template for language
 
 # Andorra (Andorra)
 ad:
@@ -345,8 +345,7 @@ cm:
 # China (中国)
 cn:
     partition: 117
-    # languages: zh, zh-cn, zh-hans
-    languages: zh-Hans # changed for now to reflect my understanding of how it should be
+    languages: zh, zh-cn, zh-hans
     names: !include country-names/cn.yaml
     postcode:
       pattern: "dddddd"
