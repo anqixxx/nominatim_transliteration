@@ -302,7 +302,8 @@ def parse_lang(header) -> List[str]:
     languages = napi.Locales.from_accept_languages(header).languages
     return [normalize_lang(lang) for lang in languages] # both here and in transliterate, need to think about best logic flow
     # in final result, parse_lang will probably be part of larger script, just here right now in this form for testing modularity
-
+    # should we allow for duplicates? this is only probably a big issue in English
+    # would probably be better code if not
 
 variable = 'hospital in dandong'
 # variable = 'school in dandong'
