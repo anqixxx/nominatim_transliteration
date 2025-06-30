@@ -215,7 +215,7 @@ def decode_canto(line: str) -> str:
     cantonese = Cantonese() # perhaps make into global variable later
     cantonese_line = ""
     for char in line:
-        cantonese_line += cantonese.getRoman(char)[0][0] # python uppercase first line
+        cantonese_line += cantonese.getRoman(char)[0][0].capitalize()
         cantonese_line += ' '
     return cantonese_line.strip()
 

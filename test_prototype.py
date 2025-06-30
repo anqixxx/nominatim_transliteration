@@ -139,4 +139,4 @@ def test_canto_transliterate():
     """
     test_str = "梁國雄"
     output = decode_canto(test_str)
-    assert output == "leung gwok hung"
+    assert output == "Leung Qwok Hung"
