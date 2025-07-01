@@ -52,7 +52,12 @@ def parse_languages(langstr: str) -> List[str]:
         description separately. Badly formatted parts are then ignored.
 
         Using the additional normalization transliteration constraints,
-        then returns the larguage in its normalized form
+        then returns the larguage in its normalized form, as well as the regional 
+        dialect, if applicable.
+
+        The regional dialect always takes precedence
+
+        Languages are returned in lowercase form
     """
     # split string into languages
     candidates = []
@@ -69,8 +74,12 @@ def parse_languages(langstr: str) -> List[str]:
     # we want base transliteration language only
     languages = []
     for lid, _ in candidates:
-        normalized = normalize_lang(lid)
+        lid = lid
 
+        if lid not in languages:
+            languages.append(lid)
+
+        normalized = normalize_lang(lid)
         for norm_lang in normalized:
             if norm_lang not in languages:
                 languages.append(norm_lang)

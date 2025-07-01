@@ -9,7 +9,7 @@ def test_parsing_en():
     """
     test_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
     output = parse_languages(test_header)
-    assert output == ['en']
+    assert output == ['en-CA', 'en', 'en-GB', 'en-US']
 
 
 def test_parsing_zh():
@@ -20,7 +20,7 @@ def test_parsing_zh():
     """
     test_header = "zh;q=0.9,zh-cn;q=0.8,zh-Hans-CN;q=0.7"
     output = parse_languages(test_header)
-    assert output == ['zh-Hans', 'zh-Hant', 'yue']
+    assert output == ['zh', 'zh-Hans', 'zh-Hant', 'yue', 'zh-cn', 'zh-Hans-CN']
 
 
 def test_parsing_zh_en():
@@ -31,4 +31,4 @@ def test_parsing_zh_en():
     """
     test_header = "zh;q=0.4, en-US, zh-cn;q=0.8,zh-Hans-CN;q=0.7, en-UK;q=0.1"
     output = parse_languages(test_header)
-    assert output == ['en', 'zh-Hans', 'zh-Hant', 'yue']
+    assert output == ['en-US', 'en', 'zh-cn', 'zh-Hans', 'zh-Hans-CN', 'zh', 'zh-Hant', 'yue', 'en-UK']
