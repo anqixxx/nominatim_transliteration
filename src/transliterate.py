@@ -3,16 +3,14 @@
 import unicodedata
 import nominatim_api as napi
 from unidecode import unidecode
-import asyncio
 import opencc
 import yaml
 from cantoroman import Cantonese # only works from cantonese (written zh-Hant script) to latin
 from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
 from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
-from nominatim_api.typing import Protocol
 from nominatim_api.config import Configuration
 from nominatim_db.db.connection import Connection
-from normalization import normalize_lang
+from .normalization import normalize_lang
 
 data = None
 
@@ -102,7 +100,6 @@ def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
         Returns output as list
     """
     output = []
-    user_languages = [normalize_lang(lang) for lang in user_languages]
 
     for i, result in enumerate(results):
         address_parts = transliterate(result, user_languages)

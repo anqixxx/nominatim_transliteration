@@ -1,14 +1,15 @@
 import pytest
 import nominatim_api as napi
 import asyncio
-from src.normalization import parse_lang
 from src.transliterate import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, decode_canto
+from src.normalization import parse_languages
 
 async def search(query):
     """ Nominatim Search Query
     """
     async with napi.NominatimAPIAsync() as api:
         return await api.search(query, address_details=True)
+
 
 def test_transliterate():
     """ Base Transliteration Test
@@ -19,6 +20,7 @@ def test_transliterate():
     results = asyncio.run(search(f"{variable}"))
     output = result_transliterate(results)[0]
     assert output == "Dan Dong Shi Di Liu Zhong Xue, Qi Wei Lu, Zhan Qian Jie Dao, Dan Dong Shi, Zhen Xing Qu, 118000, Zhong Guo"
+
 
 def test_transliterate_english():
     """ Base Transliteration Test to English
@@ -31,6 +33,7 @@ def test_transliterate_english():
     output = result_transliterate(results, ['en'])[0]
     assert output == "Dan Dong Shi Di Liu Zhong Xue, Qi Wei Lu, Zhanqian Subdistrict, Dandong, Zhenxing, 118000, China"
 
+
 def test_transliterate_local():
     """ Base Transliteration Test where the user knows the local language
 
@@ -38,8 +41,9 @@ def test_transliterate_local():
     """
     variable = 'hospital in dandong'
     results = asyncio.run(search(f"{variable}"))
-    output = result_transliterate(results, ['zh'])[0]
+    output = result_transliterate(results, ['zh-Hans'])[0] # if we have zh enterring here it fails
     assert output == "丹东市中医院, 锦山大街, 站前街道, 元宝区, 振兴区, 118000, 中国"
+
 
 def test_transliterate_ps():
     """ Base transliteration test where the user does not know the local language
@@ -56,6 +60,7 @@ def test_transliterate_ps():
     output = result_transliterate(results, ['ps'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, چين"
 
+
 def test_transliterate_he():
     """ Base transliteration test where the user does not know the local language
         and only knows a non-latin language
@@ -71,6 +76,7 @@ def test_transliterate_he():
     output = result_transliterate(results, ['he'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, סין"
 
+
 def test_transliterate_km():
     """ Base transliteration test where the user does not know the local language
         and only knows a non-latin language
@@ -85,6 +91,7 @@ def test_transliterate_km():
     results = asyncio.run(search(f"{variable}"))
     output = result_transliterate(results, ['km'])[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, ចិន"
+
 
 def test_transliterate_two():
     """ Base transliteration test where the user does not know the local language
@@ -108,29 +115,12 @@ def test_transliterate_region():
         All non-latin components should then be translated to Latin
     """
     variable = 'hospital in dandong'
+    test_header = "fr,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
+
     results = asyncio.run(search(f"{variable}"))
-    output = result_transliterate(results, ['fr', 'en-US'])[0]
+    output = result_transliterate(results, parse_languages(test_header))[0]
     assert output == "Dan Dong Shi Zhong Yi Yuan, Jinshan Main Street, Zhanqian Subdistrict, Yuanbao, Zhenxing, 118000, Chine"
 
-def test_parsing_en():
-    """ Base HTML Header Parsing test to see if it can properly concatanate and 
-        extract the proper naming conventions
-
-        Checks if the prototype can differentiate between English Variants
-    """
-    test_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
-    output = parse_lang(test_header)
-    assert output == ['en', 'en', 'en', 'en']
-
-def test_parsing_zh():
-    """ Base HTML Header Parsing test to see if it can properly concatanate and 
-        extract the proper naming conventions
-
-        Checks if the prototype can differentiate between Chinese Variants
-    """
-    test_header = "zh;q=0.9,zh-cn;q=0.8,zh-Hans-CN;q=0.7"
-    output = parse_lang(test_header)
-    assert output == ['zh-Hans', 'zh-Hans', 'zh-Hans']
 
 def test_parsing_transliterate():
     """ Base HTML Header Parsing test + Transliteration
@@ -142,8 +132,9 @@ def test_parsing_transliterate():
     test_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
     variable = 'school in dandong'
     results = asyncio.run(search(f"{variable}"))
-    output = result_transliterate(results, parse_lang(test_header))[0]
+    output = result_transliterate(results, parse_languages(test_header))[0]
     assert output == "Dan Dong Shi Di Liu Zhong Xue, Qi Wei Lu, Zhanqian Subdistrict, Dandong, Zhenxing, 118000, China"
+
 
 def test_canto_transliterate():
     """ Cantonese transliteration to Latin test

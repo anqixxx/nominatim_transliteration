@@ -1,17 +1,6 @@
 # Proof of concept of transliteration using Nominatim as a library
-# from nominatim_api.v1.format import dispatch as dispatch
-import unicodedata
 import nominatim_api as napi
 from unidecode import unidecode
-import asyncio
-import opencc
-import yaml
-from cantoroman import Cantonese # only works from cantonese (written zh-Hant script) to latin
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
-from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
-from nominatim_api.typing import Protocol
-from nominatim_api.config import Configuration
-from nominatim_db.db.connection import Connection
 
 def prototype(results):
     """ Initial transliteration prototype
