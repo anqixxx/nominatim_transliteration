@@ -6,11 +6,12 @@ from unidecode import unidecode
 import opencc
 import yaml
 from cantoroman import Cantonese # only works from cantonese (written zh-Hant script) to latin
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
+from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable, Mapping
 from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
 from nominatim_api.config import Configuration
 from nominatim_db.db.connection import Connection
-from .normalization import normalize_lang
+import os
+
 
 data = None
 
@@ -25,10 +26,14 @@ class Transliterator():
         self.data = None
 
 
-def load_languages(yaml_path='country_settings.yaml'):
+def load_languages(yaml_path=None):
     """ Loads country_settings
         Yaml files from Nominatim blob/master/settings/country_settings.yaml 
     """
+    if yaml_path is None:
+        current_dir = os.path.dirname(__file__)
+        yaml_path = os.path.join(current_dir, "..", "country_settings.yaml")
+
     with open(yaml_path, 'r') as file:
         return yaml.safe_load(file)
 
@@ -217,7 +222,7 @@ def transliterate(result, user_languages: List) -> List[str]:
         if line.isaddress and line.names:
 
             if not iso:
-                line.local_name = napi.Locales(user_languages).display_name(line.names)
+                line.local_name, lang = display_name_with_locale(user_languages, line.names)
                 # print(line.names) # For test cases, to see what names are avaliable
                 # dont use this function for Locales
                 # want to replace this
@@ -230,3 +235,38 @@ def transliterate(result, user_languages: List) -> List[str]:
                     label_parts.append(_transliterate(line, user_languages))
 
     return label_parts
+
+
+def display_name_with_locale(name_tags: List[str], names: Optional[Mapping[str, str]]) -> Tuple[str, str]:
+    """ Return the best matching name from a dictionary of names
+        containing different name variants, as well as an identifier 
+        with regards to what language used
+
+        If 'names' is null or empty, an empty tuple is returned. If no
+        appropriate localization is found, the first name is returned with
+        the 'default' marker, where afterwards iso is used.
+    """
+    if not names:
+        return ['', '']
+    if len(names) > 1:
+        for tag in name_tags:
+            alt_name = f"alt_name:{tag}"
+            name = f"name:{tag}"
+
+            if name in names:
+                return [names[name], tag]
+            elif alt_name in names:
+                return [names[alt_name], tag]
+
+    # Nothing? Return any of the other names as a default.
+    if 'name' in names:
+        return [names['name'], "default"] # without this will return ref before name
+    return [next(iter(names.values())), "default"] # want to see what this will return
+
+
+async def search(query):
+    """ Nominatim Search Query
+    """
+    async with napi.NominatimAPIAsync() as api:
+        return await api.search(query, address_details=True)
+        # return await api.search(query)
