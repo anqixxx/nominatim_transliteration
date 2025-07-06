@@ -81,23 +81,6 @@ def get_locales(results):
     return sorted(locale_set)
 
 
-def result_locales(address_part, languages: List[str]):
-    """ Given a result address part component, return if True the user knows any
-        of the locales associated with the results and False if transliteration
-        is needed
-    """
-    if languages:
-        for language in languages:
-            target = f"name:{language}" 
-            if target in address_part.names.keys():
-                return True
-        
-            target = f"alt_name:{language}" 
-            if target in address_part.names.keys(): 
-                return True
-    return False
-
-
 def result_transliterate(results, user_languages: List[str] = []) -> List[str]:
     """ High level transliteration result wrapper
 
@@ -157,7 +140,7 @@ def zh_Hans_transliterate(line: napi.AddressLine):
 
         Else switch to standard Latin default transliteration
     """
-    if result_locales(line, ['zh-hant']):
+    if line.local_name_lang == 'zh-hant':
         converter = opencc.OpenCC('t2s.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
         return converter.convert(line.local_name)
     return unidecode(line.local_name)
@@ -168,7 +151,7 @@ def zh_Hant_transliterate(line: napi.AddressLine):
 
         Else switch to standard Latin default transliteration
     """
-    if result_locales(line, ['zh-hans']) or result_locales(line, ['zh']): # also need a way to know it its in chinese or not
+    if line.local_name_lang == 'zh-hans' or line.local_name_lang == 'zh-CN': # also need a way to know it its in chinese or not
         converter = opencc.OpenCC('s2t.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
         return converter.convert(line.local_name)
     return unidecode(line.local_name)
@@ -179,7 +162,7 @@ def yue_transliterate(line: napi.AddressLine):
 
         Else switch to standard Latin default transliteration
     """
-    if result_locales(line, ['zh-hans']) or result_locales(line, ['zh']): # also need a way to know it its in chinese or not
+    if line.local_name_lang == 'zh-hans' or line.local_name_lang == 'zh':
         converter = opencc.OpenCC('s2t.json') # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
         return converter.convert(line.local_name)
     return unidecode(line.local_name)
@@ -213,8 +196,7 @@ def transliterate(result, user_languages: List) -> List[str]:
         return label_parts
 
     local_languages = get_languages(result)
-    print(local_languages)
-    print(user_languages)
+
     if len(local_languages) == 1 and local_languages[0] in user_languages:
         iso = True
 
@@ -222,13 +204,14 @@ def transliterate(result, user_languages: List) -> List[str]:
         if line.isaddress and line.names:
 
             if not iso:
-                line.local_name, lang = display_name_with_locale(user_languages, line.names)
+                line.local_name, line.local_name_lang = display_name_with_locale(user_languages, line.names) # new identifier, local_name_lang
+
                 # print(line.names) # For test cases, to see what names are avaliable
                 # dont use this function for Locales
                 # want to replace this
 
             if not label_parts or label_parts[-1] != line.local_name:
-                if iso or result_locales(line, user_languages):
+                if iso or line.local_name_lang in user_languages:
                     print(f"no transliteration needed for {line.local_name}")
                     label_parts.append(line.local_name)
                 else:
