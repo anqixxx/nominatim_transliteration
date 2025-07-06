@@ -14,7 +14,7 @@ import os
 
 
 data = None
-
+latin_data = None
 
 class Transliterator():
     """
@@ -38,6 +38,20 @@ def load_languages(yaml_path=None):
         return yaml.safe_load(file)
 
 
+def load_latin(yaml_path=None):
+    """ Loads latin_languages.yaml
+
+        Will only work on two-letter ISO 639 language codes
+        with the exception of yue, which is also included
+    """
+    if yaml_path is None:
+        current_dir = os.path.dirname(__file__)
+        yaml_path = os.path.join(current_dir, "..", "latin_languages.yaml")
+
+    with open(yaml_path, 'r') as file:
+        return yaml.safe_load(file)
+    
+
 def get_languages(result):
     """ Given a result, returns the languages associated with the region
 
@@ -54,16 +68,25 @@ def get_languages(result):
     return []
 
 
-def latin(text):
-    """ Given a text string, eturns if
-        the string is Latin based or not
+def latin(language_code):
+    """ Using latin_languages.yaml, returns if the 
+        given language is latin based or not.
+
+        If the code does not exist in the yaml file, it 
+        will return false. This works as, due to normalization,
+        we assume that the "prime" version of the code is also in 
+        the user languages, so it will eventually execute
+
+        Will only work on two-letter ISO 639 language codes
+        with the exception of yue, which is also included
     """
-    for char in text:
-        if char.isalpha():
-            name = unicodedata.name(char, "")
-            if 'LATIN' not in name:
-                return False
-    return True
+    global latin_data
+
+    if not latin_data:
+        latin_data = load_latin()
+
+    if latin_data.get(language_code):
+        return latin_data.get(language_code)
 
 
 def get_locales(results):
@@ -253,3 +276,5 @@ async def search(query):
     async with napi.NominatimAPIAsync() as api:
         return await api.search(query, address_details=True)
         # return await api.search(query)
+
+print(latin("en"))
