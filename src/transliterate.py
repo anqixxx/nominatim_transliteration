@@ -6,7 +6,7 @@ from unidecode import unidecode
 import opencc
 import yaml
 from cantoroman import Cantonese # only works from cantonese (written zh-Hant script) to latin
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable, Mapping
+from typing import Optional, Tuple, Sequence, TypeVar, Type, List, cast, Callable, Mapping
 from langdetect import detect, LangDetectException # for now, until can figure out why names default no langauge
 from nominatim_api.config import Configuration
 from nominatim_db.db.connection import Connection
@@ -68,7 +68,7 @@ def get_languages(result):
     return []
 
 
-def latin(language_code):
+def latin(language_code) -> bool:
     """ Using latin_languages.yaml, returns if the 
         given language is latin based or not.
 
@@ -87,6 +87,7 @@ def latin(language_code):
 
     if latin_data.get(language_code):
         return latin_data.get(language_code)
+    return False
 
 
 def get_locales(results):
@@ -149,6 +150,12 @@ def _transliterate(line: napi.AddressLine, locales: List[str], in_cantonese: boo
         if _function in globals():
             print(f"{locale} transliteration successful")
             return globals()[_function](line)
+        elif latin(locale):
+            print("latin based language detected, latin transliteration occuring")
+            if not in_cantonese:
+                return unidecode(line.local_name)
+            else:
+                return decode_canto(line.local_name)
     
     print("defaulting to latin based transliteration")
     if not in_cantonese:
@@ -276,5 +283,3 @@ async def search(query):
     async with napi.NominatimAPIAsync() as api:
         return await api.search(query, address_details=True)
         # return await api.search(query)
-
-print(latin("en"))
