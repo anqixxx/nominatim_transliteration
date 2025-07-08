@@ -78,7 +78,7 @@ it: true   # Italian -> ciao amico
 ja: false  # Japanese -> こんにちは、友人
 jv: true   # Javanese -> halo kanca
 kn: false  # Kannada -> ನಮಸ್ಕಾರ ಗೆಳೆಯ
-kr: true  # Kanuri -> salam sawa
+kr: true   # Kanuri -> salam sawa
 ks: false  # Kashmiri -> no google translate, but wikipedia says nonlatin
 kk: false  # Kazakh (Cyrillic) -> сәлем досым
 km: false  # Khmer -> សួស្តីមិត្ត
