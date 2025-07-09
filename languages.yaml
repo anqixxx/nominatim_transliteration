@@ -203,6 +203,7 @@ co:
 # Cree -> not supported by google translate, latin & aboriginal syllabics
 cr: 
     latin: false  
+    written: None
 
 
 # Croatian -> zdravo prijatelju
@@ -226,6 +227,7 @@ da:
 # Divehi -> ހެލޯ ފްރެންޑް
 dv: 
     latin: false  
+    written: None
 
 
 # Dutch -> hallo vriend
@@ -237,6 +239,7 @@ nl:
 # Dzongkha -> ཧེ་ལོ་གྲོགས་པོ།
 dz:
     latin: false
+    written: None
 
 
 # English -> hello friend
@@ -488,7 +491,7 @@ ks:
 # Kazakh (Cyrillic) -> сәлем досым
 kk:
     latin: false
-    writing: cyr
+    written: cyr
 
 
 # Khmer -> សួស្តីមិត្ត
@@ -512,7 +515,7 @@ rw:
 # Kyrgyz -> салам дос
 ky:
     latin: false
-    writing: cyr
+    written: cyr
 
 
 # Komi -> чолӧм ёрт, cyrillic?
@@ -602,7 +605,7 @@ lb:
 # Macedonian (Cyrillic) -> здраво пријателе
 mk:
     latin: false
-    writing: cyr
+    written: cyr
 
 
 # Malagasy -> salama namana
@@ -620,6 +623,7 @@ ms:
 # Malayalam -> ഹലോ സുഹൃത്തേ
 ml:
     latin: false
+    written: None
 
 
 # Maltese -> hello habib
@@ -691,6 +695,7 @@ ng:
 # Nepali -> नमस्ते साथी
 ne:
     latin: false
+    written: None
 
 
 # Norwegian -> hei venn
@@ -720,11 +725,13 @@ oc:
 # Ojibwa -> indigenous canadian language, toss up
 oj:
     latin: false
+    written: None
 
 
 # Oriya, Odia -> ନମସ୍କାର ବନ୍ଧୁ
 or:
     latin: false
+    written: None
 
 
 # Oromo -> akkam jirtu hiriyaa koo
@@ -742,6 +749,7 @@ os:
 # Pali -> nonlatin, from wikipedia
 pi:
     latin: false
+    written: None
 
 
 # Pashto -> سلام ملګری
@@ -837,7 +845,7 @@ sc:
 # Serbian -> здраво пријатељу (Cyrillic?)
 sr:
     latin: false
-    writing: cyr
+    written: cyr
 
 
 # Shona -> mhoro shamwari

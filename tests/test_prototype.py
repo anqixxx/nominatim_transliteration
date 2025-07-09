@@ -1,7 +1,7 @@
 import pytest
 import nominatim_api as napi
 import asyncio
-from src.transliterate import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, decode_canto
+from src.transliterate import get_languages, latin, detect_language, result_transliterate, transliterate, _transliterate, decode_canto, load_lang_info
 from src.normalization import parse_languages
 
 async def search(query):
@@ -145,3 +145,12 @@ def test_canto_transliterate():
     test_str = "梁國雄"
     output = decode_canto(test_str)
     assert output == "Leung Gwok Hung"
+
+
+def test_load_languages():
+    lang_data = load_lang_info()
+    for language_code in lang_data:
+        language = lang_data.get(language_code)
+        print(language_code)
+        latin = (language['written'] == 'lat')
+        assert latin == language['latin']

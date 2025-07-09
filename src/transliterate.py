@@ -56,6 +56,9 @@ def load_latin(yaml_path=None):
 
 def load_lang_info(yaml_path=None):
     """ Loads language information on writing system
+
+    Will only work on two-letter ISO 639 language codes
+    with the exception of yue, which is also included
     """
     if yaml_path is None:
         current_dir = os.path.dirname(__file__)
