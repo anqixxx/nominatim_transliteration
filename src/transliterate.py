@@ -13,8 +13,9 @@ from nominatim_db.db.connection import Connection
 import os
 
 
-data = None
+country_data = None
 latin_data = None
+lang_data = None
 
 class Transliterator():
     """
@@ -23,10 +24,11 @@ class Transliterator():
     def __init__(self, config: Configuration, conn: Connection) -> None:
         self.config = config
         self.db_connection = conn
-        self.data = None
+        self.country_data = None
+        self.lang_data = None
 
 
-def load_languages(yaml_path=None):
+def load_country_info(yaml_path=None):
     """ Loads country_settings
         Yaml files from Nominatim blob/master/settings/country_settings.yaml 
     """
@@ -52,17 +54,27 @@ def load_latin(yaml_path=None):
         return yaml.safe_load(file)
     
 
+def load_lang_info(yaml_path=None):
+    """ Loads language information on writing system
+    """
+    if yaml_path is None:
+        current_dir = os.path.dirname(__file__)
+        yaml_path = os.path.join(current_dir, "..", "languages.yaml")
+
+    with open(yaml_path, 'r') as file:
+        return yaml.safe_load(file)
+
 def get_languages(result):
     """ Given a result, returns the languages associated with the region
 
         Special handling is needed for Macau and Hong Kong (not in yaml)
     """
-    global data
+    global country_data
 
-    if not data:
-        data = load_languages()
+    if not country_data:
+        country_data = load_country_info()
 
-    country = data.get(result.country_code.lower())
+    country = country_data.get(result.country_code.lower())
     if country and 'languages' in country:
         return [lang.strip() for lang in country['languages'].split(',')]
     return []
@@ -80,13 +92,14 @@ def latin(language_code) -> bool:
         Will only work on two-letter ISO 639 language codes
         with the exception of yue, which is also included
     """
-    global latin_data
+    global lang_data
 
-    if not latin_data:
-        latin_data = load_latin()
+    if not lang_data:
+        lang_data = load_lang_info()
 
-    if latin_data.get(language_code):
-        return latin_data.get(language_code)
+    language = lang_data.get(language_code)
+    if language:
+        return language['written'] == 'lat'
     return False
 
 

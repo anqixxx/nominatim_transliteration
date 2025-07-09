@@ -35,11 +35,13 @@ sq:
 # Amharic -> ሰላም ጓደኛ
 am:
     latin: false
+    written: None
 
 
 # Arabic -> مرحبا صديق
 ar: 
     latin: false
+    written: None
 
 
 # Aragonese -> not supported by google translate, spanish-esque
@@ -51,11 +53,13 @@ an:
 # Armenian -> բարև ընկեր
 hy:
     latin: false
+    written: None
 
 
 # Assamese -> নমস্কাৰ বন্ধু
 as:
     latin: false
+    written: None
 
 
 # Avaric -> салам гьудул (Cyrillic?)
@@ -67,6 +71,7 @@ av:
 # Avestan -> not supported by google translate, iranian base
 ae:
     latin: false
+    written: None
 
 
 # Aymara -> aruntt'asmawa amigo
@@ -108,6 +113,7 @@ be:
  # Bengali -> হ্যালো বন্ধু
 bn: 
     latin: false
+    written: None
 
 
 # Bislama -> not supported by google translate, english creole
@@ -137,6 +143,7 @@ bg:
 # Burmese -> မင်္ဂလာပါ သူငယ်ချင်း
 my:
     latin: false
+    written: None
 
 
 # Catalan -> hola amic
@@ -166,6 +173,7 @@ ny:
 # Chinese -> 朋友你好
 zh:
     latin: false
+    written: None
 
 
 # Church Slavonic, Church Slavic (Cyrillic) 
@@ -312,6 +320,7 @@ lg:
 # Georgian -> გამარჯობა მეგობარო
 ka: 
     latin: false
+    written: None
 
 
 # German -> Hallo Freund
@@ -323,6 +332,7 @@ de:
 # Greek -> γεια σου φιλε
 el:
     latin: false
+    written: None
 
 
 # Greenlandic, Kalaallisut -> ilassi kammaga
@@ -340,6 +350,7 @@ gn:
 # Gujarati -> હેલો મિત્ર
 gu:
     latin: false
+    written: None
 
 
 # Haitian Creole, Haitian ->
@@ -357,6 +368,7 @@ ha:
 # Hebrew -> שלום חבר
 he:
     latin: false
+    written: None
 
 
 # Herero -> no google translate, but wikipedia says latin writing system
@@ -368,6 +380,7 @@ hz:
 # Hindi -> हैलो दोस्त
 hi:
     latin: false
+    written: None
 
 
 # Hiri Motu -> no google translate, but wikipedia says latin writing system
@@ -421,6 +434,7 @@ ie:
 # Inuktitut -> no google translate, but wikipedia says nonlatin
 iu:
     latin: false
+    written: None
 
 
 # Inupiaq -> no google translate, but wikipedia says latin writing
@@ -444,6 +458,7 @@ it:
 # Japanese -> こんにちは、友人
 ja:
     latin: false
+    written: None
 
 
 # Javanese -> halo kanca
@@ -455,6 +470,7 @@ jv:
 # Kannada -> ನಮಸ್ಕಾರ ಗೆಳೆಯ
 kn:
     latin: false
+    written: None
 
 
 # Kanuri -> salam sawa
@@ -466,6 +482,7 @@ kr:
 # Kashmiri -> no google translate, but wikipedia says nonlatin
 ks:
     latin: false
+    written: None
 
 
 # Kazakh (Cyrillic) -> сәлем досым
@@ -477,6 +494,7 @@ kk:
 # Khmer -> សួស្តីមិត្ត
 km:
     latin: false
+    written: None
 
 
 # Kikuyu -> no google translate, but wikipedia says latin
@@ -500,6 +518,7 @@ ky:
 # Komi -> чолӧм ёрт, cyrillic?
 kv:
     latin: false
+    written: None
 
 
 # Kongo -> mbote nduku
@@ -511,6 +530,7 @@ kg:
 # Korean -> 안녕, 친구
 ko:
     latin: false
+    written: None
 
 
 # Kuanyama -> dialect of Ovambo, wikipedia shows latin based excerpt
@@ -528,6 +548,7 @@ ku:
 # Lao -> ສະບາຍດີເພື່ອນ
 lo: 
     latin: false  
+    written: None
 
 
 # Latin -> salve amicus
@@ -622,6 +643,7 @@ mi:
 # Marathi -> नमस्कार मित्रा
 mr:
     latin: false
+    written: None
 
 
 # Marshallese -> yokyokwe mōtta
@@ -633,6 +655,7 @@ mh:
 # Mongolian -> сайн уу найзаа (Cyrillic?)
 mn:
     latin: false
+    written: None
 
 
 # Nauru -> wikipedia says latin based
@@ -713,6 +736,7 @@ om:
 # Ossetian, Ossetic -> салам хæлар (Cyrillic?)
 os:
     latin: false
+    written: None
 
 
 # Pali -> nonlatin, from wikipedia
@@ -723,11 +747,13 @@ pi:
 # Pashto -> سلام ملګری
 ps:
     latin: false
+    written: None
 
 
 # Persian -> سلام دوست
 fa:
     latin: false
+    written: None
 
 
 # Polish -> cześć przyjacielu
@@ -745,6 +771,7 @@ pt:
 # Punjabi -> ਹੈਲੋ ਦੋਸਤ
 pa:
     latin: false
+    written: None
 
 
 # Quechua -> hola amigo
@@ -798,6 +825,7 @@ sg:
 # Sanskrit -> नमस्कार मित्र
 sa:
     latin: false
+    written: None
 
 
 # Sardinian -> romance language, as per wikipedia
@@ -821,11 +849,13 @@ sn:
 # Sindhi -> هيلو دوست
 sd:
     latin: false
+    written: None
 
 
 # Sinhala -> ආයුබෝවන් මිත්‍රයා
 si: 
     latin: false
+    written: None
 
 
 # Slovak -> ahoj kamarát
@@ -903,6 +933,7 @@ tg:
 # Tamil -> வணக்கம் நண்பரே
 ta:
     latin: false
+    written: None
 
 
 # Tatar (Cyrillic) -> сәлам дус
@@ -914,21 +945,25 @@ tt:
 # Telugu -> హలో మిత్రమా
 te:
     latin: false
+    written: None
 
 
 # Thai -> สวัสดีเพื่อน
 th:
     latin: false
+    written: None
 
 
 # Tibetan -> ཀྱེ་གྲོགས་པོ།
 bo:
     latin: false
+    written: None
 
 
 # Tigrinya -> ሰላም ዓርከይ
 ti: 
     latin: false
+    written: None
 
 
 # Tonga -> Malo kaume'a
@@ -970,6 +1005,7 @@ tw:
 # Uyghur -> ياخشىمۇسىز دوست
 ug:
     latin: false
+    written: None
 
 
 # Ukrainian -> привіт друже (Cyrillic)
@@ -981,6 +1017,7 @@ uk:
 # Urdu -> ہیلو دوست
 ur:
     latin: false
+    written: None
 
 
 # Uzbek -> salom do'stim
@@ -1040,11 +1077,13 @@ xh:
 # Sichuan Yi -> yi base, according to wikipedia
 ii:
     latin: false
+    written: None
 
 
 # Yiddish -> העלא פרייַנד
 yi:
     latin: false
+    written: None
 
 
 # Yoruba -> hello ore
@@ -1056,6 +1095,7 @@ yo:
 # Zhuang -> tai language
 za:
     latin: false
+    written: None
 
 
 # Zulu -> sawubona mngani
@@ -1067,3 +1107,4 @@ zu:
 # Yue Chinese, used as Cantonese 你好朋友
 yue:
     latin: false
+    written: None
