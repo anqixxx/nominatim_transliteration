@@ -1,47 +1,60 @@
 from nominatim_api import FormatDispatcher, SearchResults
 from nominatim_api.server.content_types import CONTENT_TEXT
 from typing import List, Dict, Mapping, Any, Union
+from nominatim_api.v1.format import dispatch as default_dispatch
 from nominatim_api.results import AddressLines, ReverseResults, SearchResults
+from nominatim_api.server.content_types import CONTENT_TEXT
+from nominatim_api.utils.json_writer import JsonWriter
+from nominatim_api.v1.format_json import format_base_json, format_base_geocodejson, _write_osm_id, _write_typed_address
+from nominatim_api.v1 import classtypes as cl
 
+from transliterate import result_transliterate, transliterate
 
-# Stole from format_json.py :) --> can probably do a cleaner import but whatever
-def format_base_json(results: Union[ReverseResults, SearchResults],
-                     options: Mapping[str, Any], simple: bool,
-                     class_label: str) -> str:
+# extend default dispatcher
+dispatch = default_dispatch
+
+dispatch.set_content_type('transliteration', CONTENT_TEXT) # new type of content type
+
+@dispatch.format_func(SearchResults, 'anqi')
+def _format_search_anqi(results: SearchResults,
+                        options: Mapping[str, Any]) -> str:
+    print("Anqi's Version:")
+
+    return None
+
+@dispatch.format_func(SearchResults, 'transliteration')
+def _format_transliteration(results: SearchResults,
+                            options: Mapping[str, Any]) -> str:
     """ Return the result list as a simple json string in custom Nominatim format.
+        with the addition or transliteration field and without
+        class label or simple.
     """
-    out = JsonWriter()
+    if not results:
+        return '{"error":"Unable to geocode"}'
+      
+    locales = options.get("locales")
 
-    if simple:
-        if not results:
-            return '{"error":"Unable to geocode"}'
-    else:
-        out.start_array()
+    user_languages = locales.languages if locales else []
 
+    out = JsonWriter() # similar to format_base_json
+
+    # based on format_base_json and format_base_geojson
     for result in results:
         out.start_object()\
-             .keyval_not_none('place_id', result.place_id)\
-             .keyval('licence', cl.OSM_ATTRIBUTION)\
+            .keyval_not_none('place_id', result.place_id)\
+            .keyval('licence', cl.OSM_ATTRIBUTION)\
 
         _write_osm_id(out, result.osm_object)
 
-        # lat and lon must be string values
-        out.keyval('lat', f"{result.centroid.lat:0.7f}")\
-           .keyval('lon', f"{result.centroid.lon:0.7f}")\
-           .keyval(class_label, result.category[0])\
+        out.keyval('place_rank', result.rank_search)\
+           .keyval('category', result.category[0])\
            .keyval('type', result.category[1])\
-           .keyval('place_rank', result.rank_search)\
            .keyval('importance', result.calculated_importance())\
            .keyval('addresstype', cl.get_label_tag(result.category, result.extratags,
                                                    result.rank_address,
                                                    result.country_code))\
            .keyval('name', result.locale_name or '')\
            .keyval('display_name', result.display_name or '')
-
-        if options.get('icon_base_url', None):
-            icon = cl.ICONS.get(result.category)
-            if icon:
-                out.keyval('icon', f"{options['icon_base_url']}/{icon}.p.20.png")
 
         if options.get('addressdetails', False):
             out.key('address').start_object()
@@ -54,40 +67,26 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
         if options.get('namedetails', False):
             out.keyval('namedetails', result.names)
 
-        # must be string values
-        bbox = cl.bbox_from_result(result)
-        out.key('boundingbox').start_array()\
-           .value(f"{bbox.minlat:0.7f}").next()\
-           .value(f"{bbox.maxlat:0.7f}").next()\
-           .value(f"{bbox.minlon:0.7f}").next()\
-           .value(f"{bbox.maxlon:0.7f}").next()\
-           .end_array().next()
+        # get the transliteration string for this result
+        translit_str = transliterate(result, user_languages)
 
-        if result.geometry:
-            for key in ('text', 'kml'):
-                out.keyval_not_none('geo' + key, result.geometry.get(key))
-            if 'geojson' in result.geometry:
-                out.key('geojson').raw(result.geometry['geojson']).next()
-            out.keyval_not_none('svg', result.geometry.get('svg'))
+        # include the transliteration in output
+        out.keyval('transliterated_name', translit_str or "")
 
-        out.end_object()
+        out.end_object().next()  # properties
 
-        if simple:
-            return out()
+        out.key('bbox').start_array()
+        for coord in cl.bbox_from_result(result).coords:
+            out.float(coord, 7).next()
+        out.end_array().next()
 
-        out.next()
+        out.key('geometry').raw(result.geometry.get('geojson')
+                                or result.centroid.to_geojson()).next()
 
-    out.end_array()
+        out.end_object().next()
+
+    out.end_array().next().end_object()
 
     return out()
 
-dispatch = FormatDispatcher()
-
-@dispatch.format_func(SearchResults, 'anqi')
-def _format_search_anqi(results: SearchResults,
-                        options: Mapping[str, Any]) -> str:
-    print("Anqi's Version:")
-
-    return format_base_json(results, options, False,
-                                        class_label='class')
 

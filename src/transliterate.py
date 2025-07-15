@@ -224,7 +224,7 @@ def detect_language(text):
         return None
 
 
-def transliterate(result, user_languages: List) -> List[str]:
+def transliterate(result, user_languages: List) -> str:
     """ Based on Nominatim Localize and ISO regions
         Assumes the user does not know the local language
 
@@ -263,7 +263,7 @@ def transliterate(result, user_languages: List) -> List[str]:
                 else:
                     label_parts.append(_transliterate(line, user_languages))
 
-    return label_parts
+    return ", ".join(part.strip() for part in label_parts)
 
 
 def display_name_with_locale(name_tags: List[str], names: Optional[Mapping[str, str]]) -> Tuple[str, str]:
