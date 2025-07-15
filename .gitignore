@@ -2,11 +2,12 @@
 *.log
 
 # Pycache
-__pycache__/*
+/__pycache__/*
 *__pycache__
 *.pytest_cache
-/__pycache__/*
+__pycache__*
+*.pyc
 
 # Misc
-src/*.egg-info
+/src/*.egg-info
 *.DS_Store
