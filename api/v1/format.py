@@ -7,8 +7,9 @@ from nominatim_api.server.content_types import CONTENT_TEXT
 from nominatim_api.utils.json_writer import JsonWriter
 from nominatim_api.v1.format_json import format_base_json, format_base_geocodejson, _write_osm_id, _write_typed_address
 from nominatim_api.v1 import classtypes as cl
+import json
 
-from transliterate import result_transliterate, transliterate
+from transliterate import transliterate
 
 # extend default dispatcher
 dispatch = default_dispatch
@@ -37,6 +38,7 @@ def _format_transliteration(results: SearchResults,
     user_languages = locales.languages if locales else []
 
     out = JsonWriter() # similar to format_base_json
+    out.start_array()
 
     # based on format_base_json and format_base_geojson
     for result in results:
@@ -69,11 +71,9 @@ def _format_transliteration(results: SearchResults,
 
         # get the transliteration string for this result
         translit_str = transliterate(result, user_languages)
-
+        print(translit_str)
         # include the transliteration in output
         out.keyval('transliterated_name', translit_str or "")
-
-        out.end_object().next()  # properties
 
         out.key('bbox').start_array()
         for coord in cl.bbox_from_result(result).coords:
@@ -85,7 +85,7 @@ def _format_transliteration(results: SearchResults,
 
         out.end_object().next()
 
-    out.end_array().next().end_object()
+    out.end_array()
 
     return out()
 
