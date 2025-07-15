@@ -1,7 +1,0 @@
-pyproject.toml
-src/nominatim_transliteration.egg-info/PKG-INFO
-src/nominatim_transliteration.egg-info/SOURCES.txt
-src/nominatim_transliteration.egg-info/dependency_links.txt
-src/nominatim_transliteration.egg-info/top_level.txt
-tests/test_normalization.py
-tests/test_prototype.py
