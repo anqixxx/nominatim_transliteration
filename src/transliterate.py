@@ -1,6 +1,5 @@
 # Proof of concept of transliteration using Nominatim as a library
 # from nominatim_api.v1.format import dispatch as dispatch
-import unicodedata
 import nominatim_api as napi
 from unidecode import unidecode
 import opencc
@@ -214,16 +213,6 @@ def yue_transliterate(line: napi.AddressLine):
     return unidecode(line.local_name)
 
 
-def detect_language(text):
-    """ Given a string of characters, uses the langdetect library
-        to determine the language
-    """
-    try:
-        return detect(text) if len(text.strip()) >= 3 else None
-    except LangDetectException:
-        return None
-
-
 def transliterate(result, user_languages: List) -> str:
     """ Based on Nominatim Localize and ISO regions
         Assumes the user does not know the local language
@@ -245,6 +234,7 @@ def transliterate(result, user_languages: List) -> str:
 
     if len(local_languages) == 1 and local_languages[0] in user_languages:
         iso = True
+        line.local_name_lang = local_languages[0] # can potentially do more with this
 
     for line in result.address_rows:
         if line.isaddress and line.names:
